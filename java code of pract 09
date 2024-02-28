@@ -1,0 +1,98 @@
+main Activity\
+
+package com.example.prcact09;
+
+import androidx.appcompat.app.AppCompatActivity;
+
+import android.os.Bundle;
+import android.widget.Button;
+import android.widget.EditText;
+import android.widget.TextView;
+
+public class MainActivity extends AppCompatActivity {
+
+    EditText id,firstname,lastname,age;
+    DB_Controller db;
+    TextView showtext;
+    Button insert_btn,update_btn,delete_btn,show_btn;
+
+    @Override
+    protected void onCreate(Bundle savedInstanceState) {
+        super.onCreate(savedInstanceState);
+        setContentView(R.layout.activity_main);
+        id = findViewById(R.id.id);
+        firstname = findViewById(R.id.firstname);
+        lastname = findViewById(R.id.lastname);
+        age = findViewById(R.id.age);
+        showtext = findViewById(R.id.showtext);
+        insert_btn = findViewById(R.id.insert_btn);
+        update_btn = findViewById(R.id.update_btn);
+        delete_btn = findViewById(R.id.delete_btn);
+        show_btn = findViewById(R.id.show_btn);
+        db= new DB_Controller(this,"",  null,  1);
+        show_btn.setOnClickListener(v -> db.list_all_students(showtext));
+        insert_btn.setOnClickListener(v-> db.insert_students(firstname.getText().toString(),lastname.getText().toString()));
+        update_btn.setOnClickListener(v-> db.update_students( "ABC", "xyz"));
+
+        delete_btn.setOnClickListener(v-> db.delete_students(firstname.getText().toString()));
+
+
+    }
+}
+
+
+
+DB_Controler.java
+
+package com.example.prcact09;
+
+
+import android.content.ContentValues;
+import android.content.Context;
+import android.database.Cursor;
+import android.database.sqlite.SQLiteDatabase;
+import android.database.sqlite.SQLiteOpenHelper;
+import android.widget.TextView;
+
+public class DB_Controller extends SQLiteOpenHelper {
+    public DB_Controller(Context context, String name,SQLiteDatabase.CursorFactory factory, int version){
+        super(context,  "students.db", factory, version);
+    }
+    @Override
+    public void onCreate(SQLiteDatabase db) {
+        db.execSQL(" CREATE TABLE STUDENTS(ID INTEGER PRIMARY KEY, FIRSTNAME TEXT, LASTNAME TEXT, AGE Integer);");
+
+    }
+
+    @Override
+    public void onUpgrade(SQLiteDatabase db, int oldVersion, int newVersion) {
+        db.execSQL("DROP TABLE IF EXISTS STUDENTS;");
+        onCreate(db);
+
+    }
+
+    public void insert_students(String firstname, String lastname){
+        ContentValues contentvalues= new ContentValues();
+        contentvalues.put("FIRSTNAME",firstname);
+        contentvalues.put("LASTNAME",lastname);
+        this.getWritableDatabase().insertOrThrow("STUDENTS", null, contentvalues);
+    }
+
+    public void delete_students(String firstname){
+
+        this.getWritableDatabase().delete("STUDENTS", "FIRSTNAME='"+ firstname+ "'", null);
+    }
+
+    public void update_students(String old_firstname, String new_firstname){
+
+        this.getWritableDatabase().execSQL("UPDATE STUDENTS SET FIRSTNAME='"+ new_firstname +"'WHERE FIRSTNAME='" + old_firstname + "'");
+    }
+
+    public void list_all_students(TextView textview){
+        Cursor cursor= this.getReadableDatabase().rawQuery("SELECT * FROM STUDENTS", null);
+        textview.setText("");
+        while (cursor.moveToNext()){
+            textview.append(cursor.getString(1) + "" + cursor.getString(2) + "\n");
+        }
+    }
+}
